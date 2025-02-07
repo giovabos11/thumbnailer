@@ -165,20 +165,22 @@ class VideoThumbnailGenerator:
             audioQuality=options.audioQuality if options.format == 'mp4' and options.includeAudio else None
         )
 
-# Example usage
+import argparse
+import json
+
+def main():
+    parser = argparse.ArgumentParser(description='Video Thumbnail Generator')
+    parser.add_argument('input', help='Input video path')
+    parser.add_argument('--options', help='JSON string of options')
+    args = parser.parse_args()
+
+    options_dict = json.loads(args.options) if args.options else {}
+    options = ThumbnailOptions(**options_dict)
+    
+    generator = VideoThumbnailGenerator()
+    result = generator.generate(args.input, options)
+    
+    print(json.dumps(result.__dict__))
 
 if __name__ == '__main__':
-    generator = VideoThumbnailGenerator()
-    options = ThumbnailOptions(
-        quality=85,
-        framesPerSection=100,
-        autoSections=8,
-        sectionDuration=3.0,
-        width=320,
-        height=240,
-        format='mp4',
-        includeAudio=True,
-        cacheDir='./cache/'
-    )
-    result = generator.generate("input.mp4", options).path
-    print(f"Thumbnail: {result}")
+    main()
