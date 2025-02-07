@@ -1,0 +1,23 @@
+# Cache directory
+./cache
+
+# Video extensions
+*.mp4
+*.avi
+*.mkv
+*.mov
+*.flv
+*.wmv
+*.webm
+*.mpg
+*.mpeg
+*.m4v
+*.3gp
+*.3g2
+*.ogv
+*.ogg
+*.drc
+*.gif
+*.gifv
+*.mng
+*.txt
