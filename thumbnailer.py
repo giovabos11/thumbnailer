@@ -18,7 +18,8 @@ class VideoSection:
 @dataclass
 class ThumbnailOptions:
     quality: int = 75
-    framesPerSection: int = 50
+    autoFrames: bool = True
+    framesPerSection: int = 10
     sections: Optional[List[VideoSection]] = None
     autoSections: Optional[int] = None
     sectionDuration: float = 3.0
@@ -30,8 +31,8 @@ class ThumbnailOptions:
     format: OutputFormat = 'gif'
     includeAudio: bool = False
     audioQuality: int = 128
-    gifColors: int = 256  # Number of colors in the palette (2-256)
-    gifFuzz: int = 10    # Color reduction fuzz factor (1-100)
+    gifColors: int = 256
+    gifFuzz: int = 30
 
 @dataclass
 class SectionInfo:
@@ -50,6 +51,8 @@ class ThumbnailResult:
     totalDuration: float
     hasAudio: Optional[bool] = None
     audioQuality: Optional[int] = None
+    originalFps: float = 0.0
+    outputFps: float = 0.0
 
 class VideoThumbnailGenerator:
     def __init__(self):
@@ -69,7 +72,7 @@ class VideoThumbnailGenerator:
             'maintainAspectRatio': options.maintainAspectRatio,
             'format': options.format,
             'includeAudio': options.includeAudio,
-            'audioQuality': options.audioQuality
+            'audioQuality': options.audioQuality,
         }
         
         video_hash = hashlib.md5(open(video_path, 'rb').read(8192)).hexdigest()
@@ -86,6 +89,11 @@ class VideoThumbnailGenerator:
             
         Returns:
             ThumbnailResult: Object containing information about the generated thumbnail
+            
+        Raises:
+            FileNotFoundError: If input video file doesn't exist
+            ValueError: If invalid options are provided
+            RuntimeError: If thumbnail generation fails
         """
         clips = []
         final_clip = None
@@ -106,9 +114,35 @@ class VideoThumbnailGenerator:
             if os.path.exists(cache_path):
                 return self._load_from_cache(cache_path, options)
 
+            # Get original video FPS using FFmpeg
+            probe = ffmpeg.probe(video_path)
+            video_info = next(s for s in probe['streams'] if s['codec_type'] == 'video')
+            
+            # Parse frame rate which might be in rational format (e.g., '24000/1001')
+            fps_str = video_info.get('r_frame_rate', video_info.get('avg_frame_rate', '24/1'))
+            if '/' in fps_str:
+                num, den = map(float, fps_str.split('/'))
+                original_fps = num / den
+            else:
+                original_fps = float(fps_str)
+
             # Load video
             video = VideoFileClip(video_path)
             
+            # Calculate frames per section if autoFrames is True
+            if options.autoFrames:
+                # Calculate how many frames are in each section at original FPS
+                frames_in_section = int(original_fps * options.sectionDuration)
+                
+                # Define target number of frames based on section duration
+                if options.sectionDuration <= 3:
+                    target_frames = max(5, min(frames_in_section, 30))
+                else:
+                    target_frames = max(10, min(frames_in_section, 45))
+                
+                # Override framesPerSection
+                options.framesPerSection = target_frames
+
             # Calculate sections
             sections = self._calculate_sections(video, options)
             
@@ -160,8 +194,11 @@ class VideoThumbnailGenerator:
             output_path = options.outputPath or cache_path
             
             if options.format == 'gif':
-                # GIF specific settings
-                target_fps = min(30, options.framesPerSection / options.sectionDuration)
+                # Calculate target FPS for GIF
+                target_fps = options.framesPerSection / options.sectionDuration
+                target_fps = max(1, min(30, target_fps))  # Ensure reasonable FPS
+                
+                # Quality-based settings
                 quality_factor = options.quality / 100.0
                 colors = int(128 + (128 * quality_factor))  # 128-256 colors
                 fuzz = int(50 - (40 * quality_factor))      # 10-50 fuzz factor
@@ -175,11 +212,14 @@ class VideoThumbnailGenerator:
                     colors=colors
                 )
             else:  # mp4
-                # MP4 specific settings
-                target_fps = min(30, options.framesPerSection / options.sectionDuration)
+                # Calculate target FPS for MP4
+                target_fps = options.framesPerSection / options.sectionDuration
+                target_fps = min(original_fps, min(30, target_fps))
+                
+                # Video quality settings
                 video_bitrate = int(500 + (4500 * (options.quality / 100.0)))
                 
-                # Create a temporary audio filename in the cache directory
+                # Create temporary audio path in cache directory
                 temp_audio_path = os.path.join(
                     options.cacheDir or self.default_cache_dir,
                     f"temp_audio_{cache_key}.m4a"
@@ -192,7 +232,7 @@ class VideoThumbnailGenerator:
                     'preset': 'medium',
                     'threads': 2,
                     'ffmpeg_params': ['-crf', str(int(31 - (options.quality / 100.0 * 30)))],
-                    'temp_audiofile': temp_audio_path  # Specify the temp audio file location
+                    'temp_audiofile': temp_audio_path
                 }
 
                 # Add audio settings if needed
@@ -224,7 +264,9 @@ class VideoThumbnailGenerator:
                 totalFrames=int(final_clip.duration * options.framesPerSection/options.sectionDuration),
                 totalDuration=final_clip.duration,
                 hasAudio=options.includeAudio and final_clip.audio is not None if options.format == 'mp4' else None,
-                audioQuality=options.audioQuality if options.format == 'mp4' and options.includeAudio else None
+                audioQuality=options.audioQuality if options.format == 'mp4' and options.includeAudio else None,
+                originalFps=original_fps,
+                outputFps=target_fps
             )
 
             return result
@@ -241,7 +283,10 @@ class VideoThumbnailGenerator:
         finally:
             # Cleanup
             if video is not None:
-                video.close()
+                try:
+                    video.close()
+                except:
+                    pass
             for clip in clips:
                 try:
                     clip.close()
