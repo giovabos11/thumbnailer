@@ -1,5 +1,6 @@
 # Cache directory
 ./cache
+__pycache__/
 
 # Video extensions
 *.mp4
