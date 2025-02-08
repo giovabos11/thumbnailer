@@ -48,7 +48,8 @@ print(f"Dimensions: {result.width}x{result.height}")
 | Option              | Type               | Default | Description                                                                                         |
 | ------------------- | ------------------ | ------- | --------------------------------------------------------------------------------------------------- |
 | quality             | int                | 75      | Output quality (1-100)                                                                              |
-| framesPerSection    | int                | 10      | Number of frames to extract per section                                                             |
+| framesPerSection    | int                | 10      | Number of frames per section (only used when autoFrames is False)                                   |
+| autoFrames          | bool               | True    | When True, maintains the original video's FPS in the output, ignoring framesPerSection              |
 | sections            | List[VideoSection] | None    | Manual section definitions                                                                          |
 | autoSections        | int                | None    | Number of automatically distributed sections                                                        |
 | sectionDuration     | float              | 3.0     | Duration of each section in seconds                                                                 |
