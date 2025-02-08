@@ -45,21 +45,23 @@ print(f"Dimensions: {result.width}x{result.height}")
 
 ### ThumbnailOptions
 
-| Option              | Type               | Default | Description                                                   |
-| ------------------- | ------------------ | ------- | ------------------------------------------------------------- |
-| quality             | int                | 75      | Output quality (1-100)                                        |
-| framesPerSection    | int                | 10      | Number of frames to extract per section                       |
-| sections            | List[VideoSection] | None    | Manual section definitions                                    |
-| autoSections        | int                | None    | Number of automatically distributed sections                  |
-| sectionDuration     | float              | 3.0     | Duration of each section in seconds                           |
-| width               | int                | None    | Output width (maintains aspect ratio if height not specified) |
-| height              | int                | None    | Output height (maintains aspect ratio if width not specified) |
-| maintainAspectRatio | bool               | True    | Whether to maintain aspect ratio when resizing                |
-| outputPath          | str                | None    | Custom output path (uses cache directory if not specified)    |
-| cacheDir            | str                | None    | Custom cache directory                                        |
-| format              | str                | 'gif'   | Output format ('gif' or 'mp4')                                |
-| includeAudio        | bool               | False   | Include audio in mp4 output                                   |
-| audioQuality        | int                | 128     | Audio quality for mp4 (32-256 kbps)                           |
+| Option              | Type               | Default | Description                                                                                         |
+| ------------------- | ------------------ | ------- | --------------------------------------------------------------------------------------------------- |
+| quality             | int                | 75      | Output quality (1-100)                                                                              |
+| framesPerSection    | int                | 10      | Number of frames to extract per section                                                             |
+| sections            | List[VideoSection] | None    | Manual section definitions                                                                          |
+| autoSections        | int                | None    | Number of automatically distributed sections                                                        |
+| sectionDuration     | float              | 3.0     | Duration of each section in seconds                                                                 |
+| width               | int                | None    | Output width (maintains aspect ratio if height not specified)                                       |
+| height              | int                | None    | Output height (maintains aspect ratio if width not specified)                                       |
+| maintainAspectRatio | bool               | True    | Whether to maintain aspect ratio when resizing                                                      |
+| outputPath          | str                | None    | Custom output path (uses cache directory if not specified)                                          |
+| cacheDir            | str                | None    | Custom cache directory                                                                              |
+| format              | str                | 'gif'   | Output format ('gif' or 'mp4')                                                                      |
+| includeAudio        | bool               | False   | Include audio in mp4 output                                                                         |
+| audioQuality        | int                | 128     | Audio quality for mp4 (32-256 kbps)                                                                 |
+| gifColors           | int                | 256     | Number of colors in the GIF palette (2-256). Higher values give better quality but larger file size |
+| gifFuzz             | int                | 30      | Color reduction fuzz factor (1-100). Lower values give better quality but larger file size          |
 
 ### VideoSection
 
