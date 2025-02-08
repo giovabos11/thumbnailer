@@ -179,13 +179,20 @@ class VideoThumbnailGenerator:
                 target_fps = min(30, options.framesPerSection / options.sectionDuration)
                 video_bitrate = int(500 + (4500 * (options.quality / 100.0)))
                 
+                # Create a temporary audio filename in the cache directory
+                temp_audio_path = os.path.join(
+                    options.cacheDir or self.default_cache_dir,
+                    f"temp_audio_{cache_key}.m4a"
+                )
+                
                 write_videofile_kwargs = {
                     'fps': target_fps,
                     'codec': 'libx264',
                     'bitrate': f"{video_bitrate}k",
                     'preset': 'medium',
                     'threads': 2,
-                    'ffmpeg_params': ['-crf', str(int(31 - (options.quality / 100.0 * 30)))]
+                    'ffmpeg_params': ['-crf', str(int(31 - (options.quality / 100.0 * 30)))],
+                    'temp_audiofile': temp_audio_path  # Specify the temp audio file location
                 }
 
                 # Add audio settings if needed
